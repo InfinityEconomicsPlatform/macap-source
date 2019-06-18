@@ -18,14 +18,14 @@ var fn = require('../controllers/control.main');
 
 function cliAddress(req) {
 
-	var ip = (req.headers["X-Forwarded-For"] ||
-            req.headers["x-forwarded-for"] ||
-            '').split(',')[0] ||
-           req.client.remoteAddress;
+    var ip = (req.headers["X-Forwarded-For"] ||
+        req.headers["x-forwarded-for"] ||
+        '').split(',')[0] ||
+        req.client.remoteAddress;
 
-	if (ip.substr(0, 7) == "::ffff:") {
-	  ip = ip.substr(7)
-	}
+    if (ip.substr(0, 7) == "::ffff:") {
+        ip = ip.substr(7)
+    }
 
     return ip.trim();
 }
@@ -34,31 +34,31 @@ function isLocal(req) {
     return server.address().address == cliAddress(req);
 }
 
-module.exports = function(router){
+module.exports = function (router) {
 
-    router.use(function(req, res, next) {
+    router.use(function (req, res, next) {
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         next();
     });
 
     router.route('/api/v1/fetch')
-        .get(function(req, res){
+        .get(function (req, res) {
 
-            if(!isLocal(req))
-                return res.send({code:400, success:false, message:'This endpoint is not remotely accessible.'});
+            if (!isLocal(req))
+                return res.send({ code: 400, success: false, message: 'This endpoint is not remotely accessible.' });
 
-            console.log('Fetching..');
+            console.log('Fetching...');
 
-            fn.fetchCurrencies(function(err){
+            fn.fetchCurrencies(function (err) {
 
-                if(err){
+                if (err) {
                     console.log(err);
                     res.status(500);
-                    res.send({code:500, success:false, message:err});
-                }else{
+                    res.send({ code: 500, success: false, message: err });
+                } else {
                     res.status(200);
-                    res.send({code:200, success:true, message:'Currencies fetched from CoinMarket.'});
+                    res.send({ code: 200, success: true, message: 'Currencies fetched from CoinMarket.' });
                 }
 
             })
@@ -71,13 +71,13 @@ module.exports = function(router){
 
             console.log(req.query.key);
 
-            if(!req.query.key || req.query.key != config.adminKey)
-                return res.send({code:400, success:false, message:'Inavalid or missing key.'});
+            if (!req.query.key || req.query.key != config.adminKey)
+                return res.send({ code: 400, success: false, message: 'Invalid or missing key.' });
 
             cronjobs.crawl.stop();
 
             res.status(200);
-            res.send({code:200, success:true, message:'Internal cron for crawl deactivated.'});
+            res.send({ code: 200, success: true, message: 'Internal cron for crawl deactivated.' });
 
         });
 
@@ -86,19 +86,19 @@ module.exports = function(router){
 
             console.log(req.query.key);
 
-            if(!req.query.key || req.query.key != config.adminKey)
-                return res.send({code:400, success:false, message:'Inavalid or missing key.'});
+            if (!req.query.key || req.query.key != config.adminKey)
+                return res.send({ code: 400, success: false, message: 'Invalid or missing key.' });
 
             cronjobs.crawl.stop();
             cronjobs.crawl.start();
 
             res.status(200);
-            res.send({code:200, success:true, message:'Internal cron for crawl activated.'});
+            res.send({ code: 200, success: true, message: 'Internal cron for crawl activated.' });
 
         });
 
     router.route('/api/get')
-        .get(function(req, res){
+        .get(function (req, res) {
 
             var page = req.query.page;
             var results = req.query.results;
@@ -107,7 +107,7 @@ module.exports = function(router){
 
             var name = req.query.name;
 
-            page = page ? page-1 : 0;
+            page = page ? page - 1 : 0;
 
             results = results ? results : config.defaults.limit;
 
@@ -115,30 +115,30 @@ module.exports = function(router){
 
             order = order ? order : 'asc';
 
-            if(filter=='24h'){
+            if (filter == '24h') {
                 filter = 'percent_change_24h';
                 order = 'desc';
             }
-            if(filter=='7d') {
+            if (filter == '7d') {
                 filter = 'percent_change_7d';
                 order = 'desc';
             }
 
             var params = {
-                page:page,
-                results:results,
-                filter:filter,
-                order:order,
-                name:name
+                page: page,
+                results: results,
+                filter: filter,
+                order: order,
+                name: name
             };
 
-            fn.getCurrencies(params, function(err, data){
+            fn.getCurrencies(params, function (err, data) {
 
-                if(err){
+                if (err) {
                     console.log(err);
                     res.status(500);
-                    res.send({code:500, success:false, message:err});
-                }else{
+                    res.send({ code: 500, success: false, message: err });
+                } else {
                     res.type('json');
                     res.send(data);
                 }

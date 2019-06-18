@@ -16,14 +16,15 @@
 
 module.exports = {
     port: 8892,
-    mongodb:{
-        user:"apiUser",
-        pass:"**MyPasswordHere**",
-        host:"mongodb://localhost/macap"
+    mongodb: {
+        user: "apiUser",
+        pass: "**MyPasswordHere**",
+        host: "mongodb://localhost/macap"
     },
-    defaults:{
+    defaults: {
         //paging limit
-        limit:10
+        limit: 10
     },
-    adminkey:'**MyAdminKeyHere**'
+    adminkey: '**MyAdminKeyHere**',
+    apiKey: '6bf9e35a-241d-49a4-82f5-c4a9cafb29d2'
 };

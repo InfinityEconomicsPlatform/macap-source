@@ -20,24 +20,24 @@ config = require('./config.js');
 
 mongoose.Promise = global.Promise;
 mongoose.connect(
-  config.mongodb.host,
-   {
+    config.mongodb.host,
+    {
 
-   //   auth:{
-   //		authdb:'admin',
-   //		useMongoClient: true,
-   //		user:config.mongodb.user,
-   //		pass:config.mongodb.pass
-   //  }
+        //   auth:{
+        //		authdb:'admin',
+        //		useMongoClient: true,
+        //		user:config.mongodb.user,
+        //		pass:config.mongodb.pass
+        //  }
 
-  }
+    }
 );
 
 var express = require('express');
 var app = express();
 
 var toobusy = require('toobusy-js');
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     if (toobusy()) {
         res.send(503, "Server is too busy right now, sorry.");
     } else {
@@ -57,20 +57,20 @@ server = app.listen(port);
 
 cronjobs = {};
 
-server.on('listening', function(){
-    console.log('Listening on port '+port)
+server.on('listening', function () {
+    console.log('Listening on port ' + port)
     console.log('Starting internal cron.');
 
     var CronJob = require('cron').CronJob;
 
     cronjobs.crawl = new CronJob({
-        cronTime:'00 */5 * * * *',
-        onTick: function() {
+        cronTime: '00 */1 * * * *',
+        onTick: function () {
             console.log('Initiating fetch from cronjob..');
-            request('http://localhost:8892/api/v1/fetch', function(){
+            request('http://localhost:8892/api/v1/fetch', function () {
             });
         },
-        start:true
+        start: true
     });
 
 });
