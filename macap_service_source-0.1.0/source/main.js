@@ -64,7 +64,7 @@ server.on('listening', function () {
     var CronJob = require('cron').CronJob;
 
     cronjobs.crawl = new CronJob({
-        cronTime: '00 */1 * * * *',
+        cronTime: '00 */5 * * * *',
         onTick: function () {
             console.log('Initiating fetch from cronjob..');
             request('http://localhost:8892/api/v1/fetch', function () {
