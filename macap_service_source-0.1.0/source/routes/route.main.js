@@ -97,7 +97,7 @@ module.exports = function (router) {
 
         });
 
-    router.route('/api/get')
+    router.route('/api/v1/get')
         .get(function (req, res) {
 
             var page = req.query.page;
