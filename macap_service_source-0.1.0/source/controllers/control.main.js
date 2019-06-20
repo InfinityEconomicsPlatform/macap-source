@@ -15,11 +15,12 @@
  ******************************************************************************/
 
 const request = require('request');
+const requestPromise = require('request-promise');
 const currency = require('../models/model.coinmarket');
 const async = require('async');
 config = require('../config.js');
 
-const url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=1,1027,2013&convert=USD';
+const url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=5000';
 
 String.prototype.isJson = function () {
     try {
@@ -34,78 +35,60 @@ module.exports = {
 
     fetchCurrencies: function (cb) {
 
-        request({
-            url: url,
+        requestPromise({
+            uri: url,
             headers: {
                 'X-CMC_PRO_API_KEY': config.apiKey
-            }
-        }, function (err, res, data) {
+            },
+            json: true
+        })
+            .then(function (response) {
+                let data = response.data;
+                let btcConversionRate = 1 / data[0].quote.USD.price;
 
-            if (err) {
+                async.each(data, function (obj, cb) {
+                    let insertObject = {
+                        "id": obj.id,
+                        "name": obj.name,
+                        "symbol": obj.symbol,
+                        "rank": obj.cmc_rank,
+                        "price_usd": obj.quote.USD.price,
+                        "price_btc": btcConversionRate * obj.quote.USD.price,
+                        "24h_volume_usd": obj.quote.USD.volume_24h,
+                        "market_cap_usd": obj.quote.USD.market_cap,
+                        "available_supply": obj.max_supply,
+                        "total_supply": obj.total_supply,
+                        "percent_change_1h": obj.quote.USD.percent_change_1h,
+                        "percent_change_24h": obj.quote.USD.percent_change_24h,
+                        "percent_change_7d": obj.quote.USD.percent_change_7d,
+                        "last_updated": new Date(obj.last_updated).getTime()
+                    };
 
-                console.log(err);
-                cb(err);
-
-            } else {
-
-                if (data.isJson) {
-
-                    data = JSON.parse(data);
-
-                    let btcConversionRate = 1 / data.data['1'].quote.USD.price;
-
-                    async.each(data.data, function (obj, cb) {
-                        let insertObject = {
-                            "id": obj.id,
-                            "name": obj.name,
-                            "symbol": obj.name,
-                            "rank": obj.cmc_rank,
-                            "price_usd": obj.quote.USD.price,
-                            "price_btc": (1 / btcConversionRate) * obj.quote.USD.price,
-                            "24h_volume_usd": obj.quote.USD.volume_24h,
-                            "market_cap_usd": obj.quote.USD.market_cap,
-                            "available_supply": obj.max_supply,
-                            "total_supply": obj.total_supply,
-                            "percent_change_1h": obj.quote.USD.percent_change_1h,
-                            "percent_change_24h": obj.quote.USD.percent_change_24h,
-                            "percent_change_7d": obj.quote.USD.percent_change_7d,
-                            "last_updated": new Date(obj.last_updated).getTime()
-                        };
-
-                        currency.findOneAndUpdate({ id: insertObject.id }, insertObject, { upsert: true }, function (err) {
-
-                            if (err) {
-                                console.log(err);
-                                cb(err);
-                            } else {
-                                cb();
-                            }
-
-                        });
-
-                    }, function (err) {
+                    currency.findOneAndUpdate({ id: insertObject.id }, insertObject, { upsert: true }, function (err) {
 
                         if (err) {
-                            console.log('Error inserting into DB');
-                            cb('Error inserting into DB');
+                            console.log(err);
+                            cb(err);
                         } else {
-                            cb(null);
+                            cb();
                         }
 
                     });
+                }, function (err) {
 
-                } else {
+                    if (err) {
+                        console.log('Error inserting into DB');
+                        cb('Error inserting into DB');
+                    } else {
+                        cb(null);
+                    }
 
-                    console.log('Invalid response format from CoinMarket');
-                    cb('Invalid response format from CoinMarket');
-
-                }
-
-
-            }
-
-        })
-
+                });
+            })
+            .catch(function (err) {
+                console.log('Invalid response format from CoinMarket');
+                cb('Invalid response format from CoinMarket');
+            });
     },
 
     getCurrencies: function (params, cb) {
@@ -132,7 +115,7 @@ module.exports = {
             });
 
         } else {
-            currency.find({}, {}, { skip: skip, limit: params.results, sort: sort }, function (err, data) {
+            currency.find({}, {}, { skip: skip, limit: parseInt(params.results), sort: sort }, function (err, data) {
 
                 if (err) {
                     console.log(err);
